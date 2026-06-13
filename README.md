@@ -44,6 +44,25 @@ ELEVENLABS_AGENT_ID=agent_xxxx
 VITE_ELEVENLABS_AGENT_ID=agent_xxxx
 ```
 
+## Deploy on Vercel
+
+1. Import the GitHub repo in [Vercel](https://vercel.com).
+2. **Framework preset:** Vite (or Other — `vercel.json` controls build).
+3. **Root directory:** `.` (repository root)
+4. Add **Environment variables** in Vercel project settings:
+   - `ELEVENLABS_API_KEY`
+   - `ELEVENLABS_AGENT_ID`
+   - `VITE_ELEVENLABS_AGENT_ID` (same agent id, for client if needed)
+5. Deploy — Vercel builds the React app and runs `/api/*` as a serverless function.
+
+Local preview with Vercel CLI:
+
+```bash
+npm install
+npm install --prefix client
+npx vercel dev
+```
+
 ## ElevenLabs voice (configured)
 
 The app uses your **ration-ai** agent (`agent_7901ktxb63bce06ayv4zzh47kmz3`) with a warm Hindi-first personality (same voice style as Pashu Mitra). Credentials go in `server/.env` — never commit this file.

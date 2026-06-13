@@ -2,16 +2,30 @@
   "name": "pashu-poshan-ai",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "npm run dev --prefix client",
     "dev:server": "npm run dev --prefix server",
-    "build": "npm run build --prefix client && npm run build --prefix server",
+    "build": "npm run build --prefix client",
+    "vercel-build": "npm run build --prefix client",
     "test": "npm run test --prefix client",
     "configure-agent": "node scripts/configure-ration-ai-agent.mjs",
     "start": "npm run start --prefix server"
   },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "javascript-lp-solver": "^1.0.3",
+    "serverless-http": "^3.2.0",
+    "zod": "^3.25.76"
+  },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.16.5",
+    "@vercel/node": "^5.1.14",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
   }
 }

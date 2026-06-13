@@ -14,7 +14,6 @@
     "clsx": "^2.1.1",
     "javascript-lp-solver": "^1.0.3",
     "lucide-react": "^0.462.0",
-    "pashu-poshan-ai": "file:..",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1",
