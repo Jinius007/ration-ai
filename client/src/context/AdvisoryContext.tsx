@@ -32,6 +32,7 @@ interface AdvisoryContextValue {
   reset: () => void;
   showForm: boolean;
   setShowForm: (v: boolean) => void;
+  applyVoiceResult: (session: AdvisorySession, report: HerdRationReport | null) => void;
 }
 
 const defaultSession = (): AdvisorySession => ({
@@ -116,6 +117,12 @@ export function AdvisoryProvider({ children }: { children: ReactNode }) {
       },
       showForm,
       setShowForm,
+      applyVoiceResult: (nextSession, nextReport) => {
+        setSession(nextSession);
+        setReport(nextReport);
+        setShowForm(true);
+        setStep(4);
+      },
     }),
     [session, phase, step, report, showForm]
   );
