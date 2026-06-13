@@ -10,7 +10,7 @@ export function LocationStep({ onNext }: { onNext: () => void }) {
   const [detecting, setDetecting] = useState(false);
   const [district, setDistrict] = useState(session.location?.district ?? "");
   const [stateCode, setStateCode] = useState(session.location?.stateCode ?? "GJ");
-  const hi = session.lang === "hi";
+  const hi = session.lang !== "en";
 
   useEffect(() => {
     if (session.location) {
@@ -58,8 +58,8 @@ export function LocationStep({ onNext }: { onNext: () => void }) {
         </h2>
         <p className="text-sm text-[var(--muted)]">
           {hi
-            ? "Jile ke hisaab se local chara aur mineral mixture suggest hoga (NDDB RBP)."
-            : "We suggest locally available feeds and area mineral mixture per NDDB RBP."}
+            ? "Jile ke hisaab se local chara aur mineral mixture suggest hoga."
+            : "We suggest locally available feeds and mineral mixture for your area."}
         </p>
       </div>
 

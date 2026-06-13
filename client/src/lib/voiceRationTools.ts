@@ -40,7 +40,7 @@ export async function callComputeRation(params: VoiceToolParams | Record<string,
   const species: Species = p.species === "buffalo" ? "buffalo" : "cattle";
   const body = {
     farmer_name: p.farmer_name,
-    lang: p.lang === "en" ? "en" : "hi",
+    lang: (p.lang as string) || "hi",
     district: String(p.district ?? ""),
     state: String(p.state ?? ""),
     animals: [
@@ -110,7 +110,7 @@ export function computeRequirementsLocal(params: {
     monthsAfterCalving: params.months_after_calving ?? 4,
     milkPrice: 34,
   });
-  return `Roz ki poshan zaroorat (INAPH/RBP): TDN ${Math.round(req.total.tdn)} gram, CP ${Math.round(req.total.cp)} gram, Calcium ${req.total.ca.toFixed(1)} gram, Phosphorus ${req.total.p.toFixed(1)} gram. (Maintenance + doodh ke liye alag hissa.)`;
+  return `Roz ki poshan zaroorat: TDN ${Math.round(req.total.tdn)} gram, CP ${Math.round(req.total.cp)} gram, Calcium ${req.total.ca.toFixed(1)} gram, Phosphorus ${req.total.p.toFixed(1)} gram.`;
 }
 
 export function listFeedsLocal(district: string, state: string): string {

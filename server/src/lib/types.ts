@@ -2,12 +2,13 @@ export type Region = "north" | "south" | "east" | "west" | "central";
 
 export type Species = "cattle" | "buffalo";
 
-export type LangCode = "hi" | "en" | "gu" | "mr" | "bn" | "ta" | "te";
+export type LangCode = "hi" | "en" | "gu" | "mr" | "bn" | "ta" | "te" | "kn" | "ml" | "pa" | "or" | "as" | "ur";
 
 export interface FarmerLocation {
   district: string;
   state: string;
   stateCode?: string;
+  village?: string;
   label: string;
 }
 

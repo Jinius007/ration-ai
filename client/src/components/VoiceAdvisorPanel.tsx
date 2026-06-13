@@ -4,8 +4,9 @@ import {
   useConversationControls,
   useConversationStatus,
 } from "@elevenlabs/react";
-import { Loader2, Mic, Phone, PhoneOff, Volume2 } from "lucide-react";
+import { Loader2, Mic, MicOff, PhoneOff, Radio } from "lucide-react";
 import { useAdvisory } from "../context/AdvisoryContext";
+import { t } from "../lib/i18n";
 import {
   callComputeRation,
   callListRegionalFeeds,
@@ -16,6 +17,8 @@ interface ElevenLabsConfig {
   configured: boolean;
   agentId?: string;
   agentName?: string;
+  missing?: string[];
+  serverReachable?: boolean;
 }
 
 interface ChatLine {
@@ -23,60 +26,68 @@ interface ChatLine {
   text: string;
 }
 
-function TranscriptPanel({ lines, hi }: { lines: ChatLine[]; hi: boolean }) {
+function resolveAgentId(config: ElevenLabsConfig | null): string | undefined {
+  return config?.agentId || import.meta.env.VITE_ELEVENLABS_AGENT_ID || undefined;
+}
+
+function TranscriptPanel({ lines, lang }: { lines: ChatLine[]; lang: Parameters<typeof t>[0] }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines]);
 
-  if (!lines.length) {
-    return (
-      <p className="text-xs text-[var(--muted)] italic">
-        {hi ? "Call shuru karo — yahan baat-cheet dikhegi." : "Start a call — conversation appears here."}
-      </p>
-    );
-  }
-
   return (
-    <div className="space-y-2 max-h-52 overflow-y-auto text-sm pr-1">
-      {lines.map((m, i) => (
-        <div
-          key={i}
-          className={`rounded-lg px-3 py-2 ${
-            m.role === "user" ? "bg-[var(--accent)]/15 ml-4" : "bg-[var(--border)]/40 mr-4"
-          }`}
-        >
-          <span className="text-[10px] uppercase text-[var(--muted)] block mb-0.5">
-            {m.role === "user" ? (hi ? "Aap" : "You") : "Pashu Sahayak"}
-          </span>
-          {m.text}
-        </div>
-      ))}
-      <div ref={bottomRef} />
+    <div className="flex-1 flex flex-col min-h-0 call-transcript">
+      <p className="text-xs uppercase tracking-wider text-[var(--muted)] mb-2 px-1">{t(lang, "transcriptLive")}</p>
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[200px] max-h-[50vh] sm:max-h-none">
+        {!lines.length ? (
+          <p className="text-sm text-[var(--muted)] italic px-2 py-8 text-center">{t(lang, "transcriptEmpty")}</p>
+        ) : (
+          lines.map((m, i) => (
+            <div
+              key={i}
+              className={`call-bubble ${m.role === "user" ? "call-bubble-user" : "call-bubble-agent"}`}
+            >
+              <span className="call-bubble-label">{m.role === "user" ? t(lang, "you") : t(lang, "advisor")}</span>
+              <p className="text-sm sm:text-base leading-relaxed">{m.text}</p>
+            </div>
+          ))
+        )}
+        <div ref={bottomRef} />
+      </div>
     </div>
   );
 }
 
-function VoiceControls({
-  hi,
+function LiveCallControls({
+  lang,
   lines,
-  onClear,
+  autoStart,
 }: {
-  hi: boolean;
+  lang: Parameters<typeof t>[0];
   lines: ChatLine[];
-  onClear: () => void;
+  autoStart: boolean;
 }) {
   const { session } = useAdvisory();
   const { startSession, endSession } = useConversationControls();
   const { status } = useConversationStatus();
   const [error, setError] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const startedRef = useRef(false);
   const live = status === "connected" || status === "connecting";
+
+  const statusKey =
+    status === "connected"
+      ? "live"
+      : status === "connecting"
+        ? "connecting"
+        : status === "disconnected"
+          ? "off"
+          : "ending";
 
   const startCall = useCallback(async () => {
     setError(null);
-    onClear();
     setConnecting(true);
     try {
       const resp = await fetch("/api/elevenlabs/signed-url");
@@ -86,8 +97,9 @@ function VoiceControls({
         signedUrl: data.signed_url,
         connectionType: "websocket",
         dynamicVariables: {
-          farmer_name: session.farmerName || "farmer",
+          farmer_name: session.farmerName || "",
           district: session.location?.district || "",
+          village: session.location?.village || "",
           state: session.location?.state || "",
           animal_count: String(session.animals.length),
           lang: session.lang,
@@ -95,80 +107,82 @@ function VoiceControls({
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      startedRef.current = false;
     } finally {
       setConnecting(false);
     }
-  }, [session, startSession, onClear]);
+  }, [session, startSession]);
 
-  const statusLabel: Record<string, string> = hi
-    ? { disconnected: "band", connecting: "jud raha", connected: "live", disconnecting: "band ho raha" }
-    : { disconnected: "off", connecting: "connecting", connected: "live", disconnecting: "ending" };
+  useEffect(() => {
+    if (!autoStart || startedRef.current || live || connecting) return;
+    startedRef.current = true;
+    void startCall();
+  }, [autoStart, live, connecting, startCall]);
 
   return (
-    <div className="card p-4 space-y-4 border-[var(--warm)]/40 bg-gradient-to-b from-[var(--card)] to-[#15202b]">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h3 className="font-bold flex items-center gap-2 text-lg">
-            <Volume2 size={20} className="text-[var(--warm)]" />
-            {hi ? "Pashu Sahayak se baat karein" : "Talk to Pashu Sahayak"}
-          </h3>
-          <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
-            {hi
-              ? "Seedha boliye — jaise gaon ke livestock officer se. Hindi ya aapki bhasha mein, ek-ek sawal karke khurak samjhaye ga."
-              : "Speak naturally like with a village livestock officer. Hindi or your language — one question at a time."}
-          </p>
+    <div className="flex flex-col flex-1 min-h-0 px-4 py-4 sm:px-6 sm:py-6 max-w-2xl mx-auto w-full gap-5">
+      <div className="flex flex-col items-center gap-3 py-4">
+        <div className={`call-avatar ${status === "connected" ? "call-avatar-live" : ""}`}>
+          {status === "connected" ? <Mic size={36} /> : connecting ? <Loader2 className="animate-spin" size={36} /> : <MicOff size={36} />}
         </div>
-        <span
-          className={`text-xs px-2 py-1 rounded-full shrink-0 ${
-            status === "connected" ? "bg-green-500/20 text-green-300" : "bg-[var(--border)]"
-          }`}
-        >
-          {statusLabel[status] ?? status}
+        <div className="text-center">
+          <h2 className="text-xl font-bold">{t(lang, "talkToAdvisor")}</h2>
+          <p className="text-xs text-[var(--muted)] mt-1 max-w-xs mx-auto">{t(lang, "callHint")}</p>
+        </div>
+        <span className={`call-status-badge ${status === "connected" ? "call-status-live" : ""}`}>
+          {status === "connected" && <Radio size={12} className="animate-pulse" />}
+          {t(lang, statusKey as Parameters<typeof t>[1])}
         </span>
       </div>
 
-      <TranscriptPanel lines={lines} hi={hi} />
+      <TranscriptPanel lines={lines} lang={lang} />
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && (
+        <div className="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+          {error}
+          <p className="mt-1 text-[var(--muted)]">{t(lang, "micRequired")}</p>
+        </div>
+      )}
 
-      <div className="flex gap-2">
-        {!live ? (
-          <button type="button" className="btn btn-warm flex-1 py-3" onClick={startCall} disabled={connecting}>
-            {connecting ? <Loader2 className="animate-spin" size={20} /> : <Phone size={20} />}
-            {hi ? "Awaz se shuru karein" : "Start voice conversation"}
+      <div className="flex gap-3 pt-2">
+        {!live && !connecting && (
+          <button type="button" className="btn btn-warm flex-1 py-4 text-base" onClick={startCall}>
+            <Mic size={22} /> {t(lang, "continue")}
           </button>
-        ) : (
-          <button type="button" className="btn btn-secondary flex-1 py-3" onClick={() => endSession()}>
-            <PhoneOff size={20} /> {hi ? "Baat khatam" : "End conversation"}
+        )}
+        {live && (
+          <button type="button" className="btn btn-secondary flex-1 py-4" onClick={() => endSession()}>
+            <PhoneOff size={22} /> {t(lang, "endCall")}
           </button>
         )}
       </div>
-
-      <p className="text-[10px] text-[var(--muted)] text-center">Agent: ration-ai · ElevenLabs</p>
     </div>
   );
 }
 
-function VoiceSession({ agentId, hi }: { agentId: string; hi: boolean }) {
+function VoiceSession({
+  agentId,
+  lang,
+  autoStart,
+}: {
+  agentId: string;
+  lang: Parameters<typeof t>[0];
+  autoStart: boolean;
+}) {
   const [lines, setLines] = useState<ChatLine[]>([]);
-  const clear = useCallback(() => setLines([]), []);
 
   return (
     <ConversationProvider
       agentId={agentId}
       clientTools={{
-        compute_balanced_ration: async (params: Record<string, unknown>) => {
-          return callComputeRation(params);
-        },
-        list_regional_feeds: async (params: { district?: string; state?: string }) => {
-          return callListRegionalFeeds({
+        compute_balanced_ration: async (params: Record<string, unknown>) => callComputeRation(params),
+        list_regional_feeds: async (params: { district?: string; state?: string }) =>
+          callListRegionalFeeds({
             district: String(params.district ?? ""),
             state: String(params.state ?? ""),
-          });
-        },
-        get_nutrient_requirements: async (params: Record<string, unknown>) => {
-          return computeRequirementsLocal(params as Parameters<typeof computeRequirementsLocal>[0]);
-        },
+          }),
+        get_nutrient_requirements: async (params: Record<string, unknown>) =>
+          computeRequirementsLocal(params as Parameters<typeof computeRequirementsLocal>[0]),
       }}
       onMessage={(ev) => {
         const source = ev.source === "user" ? "user" : "agent";
@@ -177,48 +191,70 @@ function VoiceSession({ agentId, hi }: { agentId: string; hi: boolean }) {
         setLines((prev) => {
           const last = prev[prev.length - 1];
           if (last && last.role === source) {
-            return [...prev.slice(0, -1), { role: source, text }];
+            return [...prev.slice(0, -1), { role: source, text: `${last.text} ${text}`.trim() }];
           }
           return [...prev, { role: source, text }];
         });
       }}
     >
-      <VoiceControls hi={hi} lines={lines} onClear={clear} />
+      <LiveCallControls lang={lang} lines={lines} autoStart={autoStart} />
     </ConversationProvider>
   );
 }
 
-export function VoiceAdvisorPanel() {
+export function VoiceAdvisorPanel({ autoStart = false }: { autoStart?: boolean }) {
   const { session } = useAdvisory();
-  const hi = session.lang === "hi";
+  const lang = session.lang;
   const [config, setConfig] = useState<ElevenLabsConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetch("/api/elevenlabs/config")
-      .then((r) => r.json())
-      .then(setConfig)
+      .then((r) => {
+        if (!r.ok) throw new Error("bad status");
+        return r.json();
+      })
+      .then((data: ElevenLabsConfig) => setConfig({ ...data, serverReachable: true }))
+      .catch(() => {
+        setFetchError(true);
+        setConfig({ configured: false, serverReachable: false });
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
-      <div className="card p-4 flex items-center gap-2 text-sm text-[var(--muted)]">
-        <Loader2 className="animate-spin" size={16} /> {hi ? "Voice taiyar ho raha…" : "Loading voice…"}
+      <div className="flex-1 flex items-center justify-center gap-2 text-sm text-[var(--muted)]">
+        <Loader2 className="animate-spin" size={20} /> {t(lang, "voiceLoading")}
       </div>
     );
   }
 
-  if (!config?.configured || !config.agentId) {
+  const agentId = resolveAgentId(config);
+  const canStart = Boolean(agentId && config?.configured);
+
+  if (!canStart) {
     return (
-      <div className="card p-4 text-sm text-[var(--muted)]">
-        <Mic size={18} className="inline mr-2" />
-        {hi ? "ElevenLabs configure nahi hai." : "ElevenLabs not configured."}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-3 max-w-md mx-auto">
+        <Mic size={32} className="text-[var(--warm)]" />
+        <h3 className="font-semibold">{t(lang, "voiceSetupTitle")}</h3>
+        <p className="text-sm text-[var(--muted)]">{t(lang, "voiceSetupHint")}</p>
+        {fetchError && (
+          <p className="text-xs text-amber-400/90">
+            {lang === "hi"
+              ? "API server nahi chal raha — `npm run dev` se client + server dono chalayein."
+              : "API server not reachable — run `npm run dev` to start client and server together."}
+          </p>
+        )}
+        {!fetchError && config?.missing?.length ? (
+          <p className="text-xs text-[var(--muted)]">Missing: {config.missing.join(", ")}</p>
+        ) : null}
       </div>
     );
   }
 
-  return <VoiceSession agentId={config.agentId} hi={hi} />;
+  return <VoiceSession agentId={agentId!} lang={lang} autoStart={autoStart} />;
 }
 
 export function useSyncSessionToServer() {

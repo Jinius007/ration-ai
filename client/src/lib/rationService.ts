@@ -93,11 +93,11 @@ export function computeHerdRation(session: AdvisorySession): HerdRationReport {
 export function formatPlanSummary(report: HerdRationReport, lang: "hi" | "en" = "hi"): string {
   const lines: string[] = [];
   if (lang === "hi") {
-    lines.push(`📋 ${report.plans.length} पशुओं के लिए संतुलित खुराक (RBP)`);
+    lines.push(`📋 ${report.plans.length} पशुओं के लिए संतुलित खुराक`);
     lines.push(`💰 कुल दैनिक लागत: ₹${report.totalDailyCost} (पहले ₹${report.totalCurrentCost})`);
     if (report.savings > 0) lines.push(`✅ संभावित बचत: ₹${report.savings}/दिन`);
   } else {
-    lines.push(`📋 Balanced ration for ${report.plans.length} animal(s) (NDDB RBP)`);
+    lines.push(`📋 Balanced ration for ${report.plans.length} animal(s)`);
     lines.push(`💰 Total daily cost: ₹${report.totalDailyCost} (was ₹${report.totalCurrentCost})`);
     if (report.savings > 0) lines.push(`✅ Possible saving: ₹${report.savings}/day`);
   }

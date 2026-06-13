@@ -17,7 +17,7 @@ import { StatCard } from "./ui";
 
 export function ResultsStep({ onBack, onRestart }: { onBack: () => void; onRestart: () => void }) {
   const { session, report, compute } = useAdvisory();
-  const hi = session.lang === "hi";
+  const hi = session.lang !== "en";
   const data = report ?? compute();
 
   const nutrientChart = data.plans.flatMap((p: AnimalRationPlan) => {
@@ -41,8 +41,8 @@ export function ResultsStep({ onBack, onRestart }: { onBack: () => void; onResta
         <h2 className="text-xl font-bold mb-1">{hi ? "✅ Santulit khurak" : "✅ Balanced ration plan"}</h2>
         <p className="text-sm text-[var(--muted)]">
           {hi
-            ? "NDDB RBP least-cost LP — TDN, CP, Ca, P, DM range, concentrate cap, forage + mineral."
-            : "NDDB RBP least-cost LP with nutrient, DM, concentrate & forage constraints."}
+            ? "Kam lagat wali santulit khurak — poshan, kharch aur chara sab cover."
+            : "Least-cost balanced ration — nutrition, cost and feeds covered."}
         </p>
       </div>
 

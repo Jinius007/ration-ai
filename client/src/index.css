@@ -98,3 +98,111 @@ body {
 .step-dot.done {
   background: var(--warm);
 }
+
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.85; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+
+.lang-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.lang-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.lang-btn-active {
+  border-color: var(--accent-light);
+  background: rgba(45, 143, 111, 0.15);
+  box-shadow: 0 0 0 2px rgba(60, 184, 150, 0.2);
+}
+
+.call-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: 2px solid var(--border);
+  color: var(--muted);
+}
+
+.call-avatar-live {
+  border-color: var(--accent-light);
+  background: rgba(45, 143, 111, 0.2);
+  color: var(--accent-light);
+  box-shadow: 0 0 0 8px rgba(60, 184, 150, 0.12), 0 0 24px rgba(60, 184, 150, 0.25);
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.call-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--muted);
+}
+
+.call-status-live {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.call-bubble {
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+  max-width: 92%;
+}
+
+.call-bubble-user {
+  margin-left: auto;
+  background: rgba(45, 143, 111, 0.2);
+  border: 1px solid rgba(60, 184, 150, 0.25);
+}
+
+.call-bubble-agent {
+  margin-right: auto;
+  background: rgba(42, 53, 68, 0.8);
+  border: 1px solid var(--border);
+}
+
+.call-bubble-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.call-transcript {
+  background: rgba(13, 18, 24, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1rem;
+}

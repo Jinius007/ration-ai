@@ -10,7 +10,7 @@ import { Field } from "./ui";
 export function FeedsStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { session, addFeed, updateFeed, removeFeed } = useAdvisory();
   const [query, setQuery] = useState("");
-  const hi = session.lang === "hi";
+  const hi = session.lang !== "en";
   const season = detectSeason();
 
   const pool = useMemo(

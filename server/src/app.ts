@@ -1,3 +1,11 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../../server/.env") });
+dotenv.config();
+
 import cors from "cors";
 import express from "express";
 import { z } from "zod";
@@ -13,12 +21,13 @@ const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID ?? "";
 
 const sessionSchema = z.object({
   farmerName: z.string().default(""),
-  lang: z.enum(["hi", "en", "gu", "mr", "bn", "ta", "te"]).default("hi"),
+  lang: z.enum(["hi", "en", "gu", "mr", "bn", "ta", "te", "kn", "ml", "pa", "or", "as", "ur"]).default("hi"),
   location: z
     .object({
       district: z.string(),
       state: z.string(),
       stateCode: z.string().optional(),
+      village: z.string().optional(),
       label: z.string(),
     })
     .nullable()
@@ -61,10 +70,14 @@ export function createApp() {
   });
 
   app.get("/api/elevenlabs/config", (_req, res) => {
+    const missing: string[] = [];
+    if (!ELEVENLABS_API_KEY) missing.push("ELEVENLABS_API_KEY");
+    if (!ELEVENLABS_AGENT_ID) missing.push("ELEVENLABS_AGENT_ID");
     res.json({
-      configured: Boolean(ELEVENLABS_API_KEY && ELEVENLABS_AGENT_ID),
+      configured: missing.length === 0,
       agentId: ELEVENLABS_AGENT_ID || undefined,
       agentName: "ration-ai",
+      missing: missing.length ? missing : undefined,
     });
   });
 

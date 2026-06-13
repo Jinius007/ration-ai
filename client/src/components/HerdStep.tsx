@@ -10,7 +10,7 @@ const BREEDS: Record<Species, string[]> = {
 
 export function HerdStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { session, addAnimal, updateAnimal, removeAnimal } = useAdvisory();
-  const hi = session.lang === "hi";
+  const hi = session.lang !== "en";
 
   const ensureOne = () => {
     if (!session.animals.length) addAnimal();
@@ -22,8 +22,8 @@ export function HerdStep({ onNext, onBack }: { onNext: () => void; onBack: () =>
         <h2 className="text-xl font-bold mb-1">{hi ? "🐄 Pashu ki jaankari" : "🐄 Animal details"}</h2>
         <p className="text-sm text-[var(--muted)]">
           {hi
-            ? "Har pashu ke liye: gaay/bhains, byaat, doodh/sukhi, garbh, doodh matra — INAPH tables se requirement niklegi."
-            : "Per animal: species, lactation, milk/dry, pregnancy, yield — INAPH tables compute requirements."}
+            ? "Har pashu ke liye: gaay/bhains, byaat, doodh/sukhi, garbh, doodh matra."
+            : "Per animal: species, lactation, milk/dry, pregnancy, yield."}
         </p>
       </div>
 

@@ -10,8 +10,12 @@ import {
 } from "@/lib/types";
 import { HerdRationReport, computeHerdRation } from "@/lib/rationService";
 
+export type AppPhase = "language" | "call";
+
 interface AdvisoryContextValue {
   session: AdvisorySession;
+  phase: AppPhase;
+  setPhase: (phase: AppPhase) => void;
   step: number;
   setStep: (n: number) => void;
   setLang: (lang: LangCode) => void;
@@ -26,6 +30,8 @@ interface AdvisoryContextValue {
   report: HerdRationReport | null;
   compute: () => HerdRationReport;
   reset: () => void;
+  showForm: boolean;
+  setShowForm: (v: boolean) => void;
 }
 
 const defaultSession = (): AdvisorySession => ({
@@ -40,12 +46,16 @@ const AdvisoryContext = createContext<AdvisoryContextValue | null>(null);
 
 export function AdvisoryProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AdvisorySession>(defaultSession);
-  const [step, setStep] = useState(0);
+  const [phase, setPhase] = useState<AppPhase>("language");
+  const [step, setStep] = useState(1);
+  const [showForm, setShowForm] = useState(false);
   const [report, setReport] = useState<HerdRationReport | null>(null);
 
   const value = useMemo<AdvisoryContextValue>(
     () => ({
       session,
+      phase,
+      setPhase,
       step,
       setStep,
       setLang: (lang) => setSession((s) => ({ ...s, lang })),
@@ -100,10 +110,14 @@ export function AdvisoryProvider({ children }: { children: ReactNode }) {
       reset: () => {
         setSession(defaultSession());
         setReport(null);
-        setStep(0);
+        setStep(1);
+        setPhase("language");
+        setShowForm(false);
       },
+      showForm,
+      setShowForm,
     }),
-    [session, step, report]
+    [session, phase, step, report, showForm]
   );
 
   return <AdvisoryContext.Provider value={value}>{children}</AdvisoryContext.Provider>;
