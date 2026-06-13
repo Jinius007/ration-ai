@@ -11,6 +11,7 @@
     "vercel-build": "npm run build --prefix client",
     "test": "npm run test --prefix client",
     "configure-agent": "node scripts/configure-ration-ai-agent.mjs",
+    "verify-agent": "node scripts/verify-agent-lp.mjs",
     "start": "npm run start --prefix server"
   },
   "dependencies": {

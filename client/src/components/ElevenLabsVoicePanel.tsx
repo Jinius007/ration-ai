@@ -8,7 +8,7 @@ import { Loader2, Mic, PhoneOff, Radio, Sparkles } from "lucide-react";
 import { useAdvisory } from "../context/AdvisoryContext";
 import { t } from "../lib/i18n";
 import {
-  callComputeRation,
+  callComputeRationWithReport,
   callListRegionalFeeds,
   computeRequirementsLocal,
 } from "../lib/voiceRationTools";
@@ -52,11 +52,13 @@ function CallControls({
   lang,
   lines,
   autoStart,
+  lpDone,
 }: {
   agentId: string;
   lang: Parameters<typeof t>[0];
   lines: ChatLine[];
   autoStart: boolean;
+  lpDone: boolean;
 }) {
   const { session } = useAdvisory();
   const { startSession, endSession } = useConversationControls();
@@ -123,8 +125,13 @@ function CallControls({
           <h2 className="text-xl font-bold">{t(lang, "talkToAdvisor")}</h2>
           <p className="text-xs text-[var(--muted)] mt-1 max-w-sm mx-auto">{t(lang, "callHint")}</p>
           <p className="text-[10px] text-[var(--accent-light)] mt-1 flex items-center justify-center gap-1">
-            <Sparkles size={10} /> ElevenLabs · Natural AI voice
+            <Sparkles size={10} /> ElevenLabs · LP ration when agent calls compute_balanced_ration
           </p>
+          {lpDone && (
+            <p className="text-[10px] text-green-400 mt-1">
+              {lang === "en" ? "✅ LP ration computed — see form below" : "✅ LP khurak nikli — neeche detail dekhein"}
+            </p>
+          )}
         </div>
         <span className={`call-status-badge ${status === "connected" ? "call-status-live" : ""}`}>
           {status === "connected" && <Radio size={12} className="animate-pulse" />}
@@ -157,15 +164,23 @@ function CallControls({
 }
 
 export function ElevenLabsVoicePanel({ agentId, autoStart = false }: { agentId: string; autoStart?: boolean }) {
-  const { session } = useAdvisory();
+  const { session, applyVoiceResult } = useAdvisory();
   const lang = session.lang;
   const [lines, setLines] = useState<ChatLine[]>([]);
+  const [lpDone, setLpDone] = useState(false);
 
   return (
     <ConversationProvider
       agentId={agentId}
       clientTools={{
-        compute_balanced_ration: async (params: Record<string, unknown>) => callComputeRation(params),
+        compute_balanced_ration: async (params: Record<string, unknown>) => {
+          const result = callComputeRationWithReport(params);
+          if (result.ok) {
+            applyVoiceResult(result.session, result.report);
+            setLpDone(true);
+          }
+          return result.summary;
+        },
         list_regional_feeds: async (params: { district?: string; state?: string }) =>
           callListRegionalFeeds({
             district: String(params.district ?? ""),
@@ -187,7 +202,7 @@ export function ElevenLabsVoicePanel({ agentId, autoStart = false }: { agentId: 
         });
       }}
     >
-      <CallControls agentId={agentId} lang={lang} lines={lines} autoStart={autoStart} />
+      <CallControls agentId={agentId} lang={lang} lines={lines} autoStart={autoStart} lpDone={lpDone} />
     </ConversationProvider>
   );
 }

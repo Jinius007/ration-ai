@@ -1,6 +1,5 @@
-import { computeRequirement } from "./nutrientRequirements";
-import { feedsForLocation } from "./regionalFeeds";
-import { detectSeason, defaultWeight, type Species } from "./types";
+import { computeRationViaLp, regionalFeedsText, requirementsViaInaph } from "./voiceLpTools";
+import { defaultWeight, type Species } from "./types";
 
 export interface VoiceToolParams {
   farmer_name?: string;
@@ -20,70 +19,32 @@ export interface VoiceToolParams {
   feeds_json?: string;
 }
 
-function parseFeedsJson(raw: string | undefined): { name: string; qty_kg: number; price_rs?: number }[] {
-  if (!raw?.trim()) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((f) => ({
-      name: String(f.name ?? f.feedName ?? ""),
-      qty_kg: Number(f.qty_kg ?? f.qtyKg ?? 0),
-      price_rs: f.price_rs != null ? Number(f.price_rs) : f.priceRs != null ? Number(f.priceRs) : undefined,
-    }));
-  } catch {
-    return [];
-  }
+export type ComputeRationResult =
+  | { ok: true; summary: string; session: import("./types").AdvisorySession; report: import("./rationService").HerdRationReport }
+  | { ok: false; summary: string };
+
+/** LP compute — runs in browser via javascript-lp-solver + feed library + INAPH tables. */
+export async function callComputeRation(
+  params: VoiceToolParams | Record<string, unknown>
+): Promise<string> {
+  const result = computeRationViaLp(params);
+  return result.message;
 }
 
-export async function callComputeRation(params: VoiceToolParams | Record<string, unknown>): Promise<string> {
-  const p = params as VoiceToolParams;
-  const species: Species = p.species === "buffalo" ? "buffalo" : "cattle";
-  const body = {
-    farmer_name: p.farmer_name,
-    lang: (p.lang as string) || "hi",
-    district: String(p.district ?? ""),
-    state: String(p.state ?? ""),
-    animals: [
-      {
-        species,
-        breed: p.breed,
-        weight_kg: Number(p.weight_kg) || defaultWeight(species),
-        calvings: Number(p.calvings) || 1,
-        in_milk: p.in_milk ?? (Number(p.milk_yield_litres) || 0) > 0,
-        months_after_calving: Number(p.months_after_calving) || 4,
-        milk_yield_litres: Number(p.milk_yield_litres) || 0,
-        milk_fat_percent: Number(p.milk_fat_percent) || (species === "buffalo" ? 7 : 4),
-        pregnant: !!p.pregnant,
-        pregnancy_month: Number(p.pregnancy_month) || 0,
-      },
-    ],
-    feeds: parseFeedsJson(p.feeds_json),
-  };
-
-  const resp = await fetch("/api/ration/compute-from-voice", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await resp.json();
-  if (!resp.ok) return String(data.error ?? "Computation failed — ask farmer for more feed details.");
-  if (data.warnings?.length) {
-    return `${data.summary}\n\nNote: ${data.warnings.join("; ")}`;
-  }
-  return data.summary;
+/** Same as callComputeRation but returns session for UI sync. */
+export function callComputeRationWithReport(
+  params: VoiceToolParams | Record<string, unknown>
+): ComputeRationResult {
+  const result = computeRationViaLp(params);
+  if (!result.ok) return { ok: false, summary: result.message };
+  return { ok: true, summary: result.message, session: result.session, report: result.report };
 }
 
 export async function callListRegionalFeeds(params: {
   district: string;
   state: string;
 }): Promise<string> {
-  const resp = await fetch("/api/ration/regional-feeds", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  const data = await resp.json();
-  return data.result ?? "Could not list feeds — confirm district and state.";
+  return regionalFeedsText(params.district, params.state);
 }
 
 export function computeRequirementsLocal(params: {
@@ -97,25 +58,5 @@ export function computeRequirementsLocal(params: {
   pregnant?: boolean;
   pregnancy_month?: number;
 }): string {
-  const species: Species = params.species === "buffalo" ? "buffalo" : "cattle";
-  const req = computeRequirement({
-    species,
-    weight: params.weight_kg ?? defaultWeight(species),
-    adult: (params.calvings ?? 1) > 0,
-    pregnant: params.pregnant ?? false,
-    pregnancyMonth: params.pregnancy_month ?? 0,
-    inMilk: params.in_milk ?? (params.milk_yield_litres ?? 0) > 0,
-    milkYield: params.milk_yield_litres ?? 0,
-    milkFat: params.milk_fat_percent ?? (species === "buffalo" ? 7 : 4),
-    monthsAfterCalving: params.months_after_calving ?? 4,
-    milkPrice: 34,
-  });
-  return `Roz ki poshan zaroorat: TDN ${Math.round(req.total.tdn)} gram, CP ${Math.round(req.total.cp)} gram, Calcium ${req.total.ca.toFixed(1)} gram, Phosphorus ${req.total.p.toFixed(1)} gram.`;
-}
-
-export function listFeedsLocal(district: string, state: string): string {
-  const season = detectSeason();
-  const feeds = feedsForLocation({ district, state, label: `${district}, ${state}` }, season).slice(0, 25);
-  const lines = feeds.map((f) => `• ${f.name} (₹${f.rate}/kg)`);
-  return `Mausam ${season}. ${district}, ${state} mein ye chara mil sakte hain:\n${lines.join("\n")}`;
+  return requirementsViaInaph(params as Record<string, unknown>);
 }

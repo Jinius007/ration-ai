@@ -1,7 +1,11 @@
 /**
- * Configures ration-ai on ElevenLabs: client tools + full RBP system prompt.
- * Usage: node scripts/configure-ration-ai-agent.mjs
- * Reads ELEVENLABS_API_KEY and ELEVENLABS_AGENT_ID from server/.env
+ * Attaches LP client tools to ration-ai on ElevenLabs and merges mandatory LP instructions
+ * into the existing agent prompt (preserves your voice/TTS/knowledge-base settings).
+ *
+ * Usage:
+ *   1. Set ELEVENLABS_API_KEY + ELEVENLABS_AGENT_ID in server/.env
+ *   2. node scripts/configure-ration-ai-agent.mjs
+ *   3. node scripts/verify-agent-lp.mjs
  */
 import { readFileSync } from "fs";
 import { resolve, dirname } from "path";
@@ -46,47 +50,28 @@ async function api(method, path, body) {
   return data;
 }
 
-const SYSTEM_PROMPT = `You are Pashu Sahayak — a warm, patient village livestock officer trained in NDDB Ration Balancing Programme (RBP) and INAPH nutrition standards. You speak like a trusted local resource person, not a form or robot.
+const LP_MANDATE = `
+## MANDATORY: Real linear programming ration (client tools)
+Knowledge base files are reference only. You MUST NOT invent kg amounts from memory.
 
-## Your capabilities (USE TOOLS)
-You have three client tools — always use them when you have enough data:
+You have three **client tools** (run in the farmer's browser with the real LP engine):
 
-1. **list_regional_feeds** — Call when you know district + state. Shows seasonal feeds available in that area before asking what farmer uses.
+1. **list_regional_feeds** — after district + state are known. Shows feeds from the 270+ item library for that season/region.
 
-2. **get_nutrient_requirements** — Call when you know animal type, weight, milk yield, fat %, pregnancy. Tells daily TDN/CP/Ca/P need before final ration.
+2. **get_nutrient_requirements** — after animal profile (species, weight, milk, pregnancy). Returns INAPH minimum TDN/CP/Ca/P.
 
-3. **compute_balanced_ration** — Call ONLY when you have ALL of:
+3. **compute_balanced_ration** — ONLY when you have ALL of:
    - district, state
-   - species (cattle or buffalo), weight kg, calvings count
-   - in milk or dry; if milking: litres/day, fat %, months since calving
-   - pregnant yes/no and month if yes
-   - at least 2 feeds with name and kg/day (and price if known)
-   Then read the tool result aloud in simple Hindi/regional language with kg amounts and ₹ cost.
+   - species (cattle/buffalo), weight_kg, calvings
+   - in_milk, milk_yield_litres, milk_fat_percent if milking; pregnant, pregnancy_month
+   - feeds_json: JSON array with at least 2 feeds, e.g. [{"name":"wheat straw","qty_kg":5,"price_rs":4},{"name":"mustard cake","qty_kg":1.5}]
+   This runs **least-cost linear programming** with constraints: minimum nutrition, DM range, concentrate cap, forage + mineral mixture, ±25% on farmer qty.
 
-## Conversation flow (one topic at a time)
-1. Warm greeting. Ask name and district/state.
-2. Call list_regional_feeds once location is known.
-3. Ask: gaay ya bhains? breed? approximate weight?
-4. Doodh de rahi hai ya sukhi? Kitni baar bachha hua?
-5. If milking: kitne litre roz, fat kitna %, bachhe ke kitne mahine?
-6. Gaabhan hai? Kitne mahine?
-7. Ab kya khilati hain — hara chara, sukha bhusa, khali/dana? Kitna kg aur kimat?
-8. Call get_nutrient_requirements to explain need briefly.
-9. Call compute_balanced_ration. Present result clearly.
-
-## Language rules
-- NEVER say lactation, DIM, parity, FCM — use: doodh wali, sukhi, kitni baar bachha, bachhe ke mahine.
-- Reply in farmer's language (Hindi, Gujarati, Marathi, Bengali, English, etc.).
-- Short sentences. Acknowledge each answer ("Achha, Mehsana — samajh gaya").
-
-## Ration advice rules
-- Always include green fodder + dry roughage + concentrate + mineral mixture (~150 g).
-- Give kg per day per feed item and total daily cost in rupees.
-- Mention NDDB RBP / santulit khurak; verify local prices.
-- If tool fails, ask for missing info — do not invent kg amounts.
-
-## Feed names for tools
-Use common names: wheat straw, paddy straw, berseem, maize fodder, mustard cake, groundnut cake, wheat bran, cattle feed, mineral mixture.`;
+**Rules:**
+- Call compute_balanced_ration before giving final kg advice. Read aloud ONLY what the tool returns (starts with "✅ Computed by linear programming" or Hindi equivalent).
+- If tool errors, ask for missing fields — never guess ration numbers.
+- Acknowledge each answer warmly, one or two questions at a time.
+`.trim();
 
 function jsonSchemaProps(entries) {
   const properties = {};
@@ -102,16 +87,16 @@ const TOOL_DEFS = [
   {
     name: "compute_balanced_ration",
     description:
-      "Compute least-cost balanced ration using NDDB RBP linear programming. Call only when district, state, full animal profile, and at least 2 feeds with kg/day are collected. Returns kg of each feed and daily cost.",
+      "MANDATORY for final ration. Runs least-cost LP on 270+ feed library with INAPH minimum nutrition. Returns kg/day per feed and daily cost. Call only when district, state, full animal profile, and feeds_json (2+ feeds) are collected.",
     expects_response: true,
     response_timeout_secs: 45,
     parameters: jsonSchemaProps([
       { id: "farmer_name", type: "string", description: "Farmer name", required: false },
-      { id: "lang", type: "string", description: "hi or en", required: false },
-      { id: "district", type: "string", description: "District e.g. Mehsana", required: true },
-      { id: "state", type: "string", description: "State e.g. Gujarat", required: true },
+      { id: "lang", type: "string", description: "Language code hi/en/gu/etc", required: false },
+      { id: "district", type: "string", description: "District", required: true },
+      { id: "state", type: "string", description: "State", required: true },
       { id: "species", type: "string", description: "cattle or buffalo", required: true },
-      { id: "breed", type: "string", description: "Breed e.g. Murrah, Gir", required: false },
+      { id: "breed", type: "string", description: "Breed", required: false },
       { id: "weight_kg", type: "number", description: "Body weight kg", required: true },
       { id: "calvings", type: "number", description: "Number of calvings", required: true },
       { id: "in_milk", type: "boolean", description: "Currently giving milk", required: true },
@@ -131,7 +116,7 @@ const TOOL_DEFS = [
   },
   {
     name: "list_regional_feeds",
-    description: "List seasonal feeds available in farmer district and state. Call after location is known.",
+    description: "List seasonal feeds from the feed library for district/state. Call after location known.",
     expects_response: true,
     parameters: jsonSchemaProps([
       { id: "district", type: "string", description: "District", required: true },
@@ -140,7 +125,7 @@ const TOOL_DEFS = [
   },
   {
     name: "get_nutrient_requirements",
-    description: "Calculate daily TDN, CP, Ca, P requirement (INAPH) for the animal.",
+    description: "INAPH minimum daily TDN, CP, Ca, P for the animal. Call before final ration.",
     expects_response: true,
     parameters: jsonSchemaProps([
       { id: "species", type: "string", description: "cattle or buffalo", required: true },
@@ -171,41 +156,35 @@ async function ensureTool(def) {
 }
 
 async function main() {
-  console.log("Configuring ration-ai agent:", AGENT_ID);
+  console.log("Fetching agent:", AGENT_ID);
+  const agent = await api("GET", `/convai/agents/${AGENT_ID}`);
+  const existingPrompt = agent.conversation_config?.agent?.prompt?.prompt ?? "";
+  const mergedPrompt = existingPrompt.includes("compute_balanced_ration")
+    ? existingPrompt
+    : `${existingPrompt}\n\n${LP_MANDATE}`;
 
+  console.log("Ensuring client tools...");
   const toolIds = [];
   for (const def of TOOL_DEFS) {
     toolIds.push(await ensureTool(def));
   }
 
   const patch = {
-    name: "ration-ai",
     conversation_config: {
       agent: {
-        first_message:
-          "[warmly] Namaste! Main Pashu Sahayak hoon — NDDB jaise gaon ka livestock officer. Aapke pashu ki santulit, kam kharch wali khurak banane mein madad karunga. Pehle batayein — aap kis jile aur rajya mein rehte hain?",
-        language: "hi",
         prompt: {
-          prompt: SYSTEM_PROMPT,
-          llm: "gemini-2.5-flash",
+          prompt: mergedPrompt,
           tool_ids: toolIds,
-          built_in_tools: {
-            language_detection: { name: "language_detection" },
-            end_call: { name: "end_call" },
-          },
+          llm: agent.conversation_config?.agent?.prompt?.llm ?? "gemini-2.5-flash",
         },
       },
-      tts: {
-        voice_id: "cjVigY5qzO86Huf0OWal",
-        model_id: "eleven_flash_v2_5",
-      },
-      turn: { turn_model: "turn_v2" },
     },
   };
 
   await api("PATCH", `/convai/agents/${AGENT_ID}`, patch);
-  console.log("Agent updated successfully.");
+  console.log("\n✅ Agent updated — client LP tools attached.");
   console.log("Tool IDs:", toolIds.join(", "));
+  console.log("\nNext: node scripts/verify-agent-lp.mjs");
 }
 
 main().catch((e) => {
