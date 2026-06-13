@@ -139,19 +139,29 @@ export function sessionFromVoiceRequest(req: VoiceRationRequest): {
   };
 }
 
-export function computeFromVoiceRequest(req: VoiceRationRequest) {
+export type VoiceComputeResult =
+  | { ok: false; error: string; warnings: string[] }
+  | {
+      ok: true;
+      report: ReturnType<typeof computeHerdRation>;
+      summary: string;
+      warnings: string[];
+      session: AdvisorySession;
+    };
+
+export function computeFromVoiceRequest(req: VoiceRationRequest): VoiceComputeResult {
   const { session, warnings } = sessionFromVoiceRequest(req);
   if (!session.animals.length) {
-    return { ok: false as const, error: "At least one animal required.", warnings };
+    return { ok: false, error: "At least one animal required.", warnings };
   }
   if (session.feeds.length < 2) {
     return {
-      ok: false as const,
+      ok: false,
       error: "Need at least 2 feeds (green/dry roughage + concentrate). Ask farmer what they feed.",
       warnings,
     };
   }
   const report = computeHerdRation(session);
   const summary = formatPlanSummary(report, session.lang === "en" ? "en" : "hi");
-  return { ok: true as const, report, summary, warnings, session };
+  return { ok: true, report, summary, warnings, session };
 }
