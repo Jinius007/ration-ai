@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --accent: #2d8f6f;
+  --accent-light: #3cb896;
+  --warm: #e8a838;
+  --text: #eef2f6;
+  --muted: #94a3b8;
+  --border: #2a3544;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(ellipse at top, #1a2836 0%, var(--bg) 55%);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: white;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-warm {
+  background: linear-gradient(135deg, #c47f12, var(--warm));
+  color: #1a1205;
+}
+
+.input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0d1218;
+  color: var(--text);
+}
+
+.input:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.step-dot.active {
+  background: var(--accent-light);
+  box-shadow: 0 0 0 4px rgba(60, 184, 150, 0.25);
+}
+
+.step-dot.done {
+  background: var(--warm);
+}

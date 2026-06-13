@@ -1,0 +1,64 @@
+{
+  "type": "webhook",
+  "name": "compute_balanced_ration",
+  "description": "Compute NDDB RBP least-cost balanced ration using linear programming when farmer location, animal profile, and feed list are known. Returns daily kg of each feed and total cost.",
+  "response_timeout_secs": 45,
+  "api_schema": {
+    "url": "{{PUBLIC_API_URL}}/api/webhook/elevenlabs/compute-ration",
+    "method": "POST",
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "farmerName": { "type": "string" },
+        "lang": { "type": "string", "enum": ["hi", "en"] },
+        "location": {
+          "type": "object",
+          "properties": {
+            "district": { "type": "string" },
+            "state": { "type": "string" },
+            "stateCode": { "type": "string" },
+            "label": { "type": "string" }
+          },
+          "required": ["district", "state", "label"]
+        },
+        "animals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "species": { "type": "string", "enum": ["cattle", "buffalo"] },
+              "breed": { "type": "string" },
+              "weightKg": { "type": "number" },
+              "calvings": { "type": "number" },
+              "inMilk": { "type": "boolean" },
+              "monthsAfterCalving": { "type": "number" },
+              "milkYieldKg": { "type": "number" },
+              "milkFatPct": { "type": "number" },
+              "milkPriceRs": { "type": "number" },
+              "pregnant": { "type": "boolean" },
+              "pregnancyMonth": { "type": "number" }
+            },
+            "required": ["id", "label", "species", "weightKg", "calvings", "inMilk", "milkYieldKg", "milkFatPct", "pregnant"]
+          }
+        },
+        "feeds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "feedId": { "type": "string" },
+              "feedName": { "type": "string" },
+              "qtyKg": { "type": "number" },
+              "priceRs": { "type": "number" },
+              "category": { "type": "string", "enum": ["roughage", "concentrate", "mineral"] }
+            },
+            "required": ["feedId", "feedName", "qtyKg", "priceRs", "category"]
+          }
+        }
+      },
+      "required": ["lang", "location", "animals", "feeds"]
+    }
+  }
+}
