@@ -1,43 +1,10 @@
-import { FEED_LIBRARY, FeedItem } from "./feedLibrary";
+import { matchFeedByName } from "./feedMatch";
 import { computeHerdRation, formatPlanSummary, type HerdRationReport } from "./rationService";
 import type { AdvisorySession, AnimalRecord, FarmerFeedEntry, LangCode, Species } from "./types";
 import { defaultWeight, uid } from "./types";
 import { normalizeVoiceText } from "./normalizeChatNumbers";
 
-const FEED_ALIASES: Record<string, string> = {
-  "wheat straw": "wheat_straw",
-  "gehu bhusa": "wheat_straw",
-  paddy: "paddy_straw",
-  parali: "paddy_straw",
-  berseem: "barseem_fodder",
-  barseem: "barseem_fodder",
-  lucerne: "lucerne_fodder",
-  rijka: "lucerne_fodder",
-  "maize fodder": "maize_fodder",
-  "makka chara": "maize_fodder",
-  "mustard cake": "mustard_cake",
-  "sarson khali": "mustard_cake",
-  "groundnut cake": "groundnut_cake",
-  "wheat bran": "wheat_bran",
-  chokar: "wheat_bran",
-  "rice bran": "rice_bran_deoiled",
-  "cotton cake": "cotton_seed_cake",
-  "binola khali": "cotton_seed_cake",
-  "mineral mixture": "mineral_mixture_bis",
-  napier: "napier_bajra___nb_21",
-};
-
-export function matchFeedByName(name: string): FeedItem | undefined {
-  const norm = name.trim().toLowerCase();
-  if (FEED_ALIASES[norm]) {
-    return FEED_LIBRARY.find((f) => f.id === FEED_ALIASES[norm]);
-  }
-  const exact = FEED_LIBRARY.find((f) => f.name.toLowerCase() === norm);
-  if (exact) return exact;
-  return FEED_LIBRARY.find(
-    (f) => f.name.toLowerCase().includes(norm) || norm.includes(f.name.toLowerCase().slice(0, 8))
-  );
-}
+export { matchFeedByName } from "./feedMatch";
 
 export interface VoiceRationRequest {
   farmer_name?: string;

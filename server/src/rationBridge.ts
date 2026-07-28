@@ -1,92 +1,11 @@
-import { FEED_LIBRARY, FeedItem } from "./lib/feedLibrary.js";
 import { formatEstimatedPriceNote, resolveFeedPrice } from "./lib/feedPrice.js";
+import { matchFeedByName } from "./lib/feedMatch.js";
 import { computeHerdRation, formatPlanSummary } from "./lib/rationService.js";
 import type { AdvisorySession, AnimalRecord, FarmerFeedEntry, LangCode, Species } from "./lib/types.js";
 import { defaultWeight, uid } from "./lib/types.js";
 import { normalizeVoiceText } from "./lib/voiceText.js";
 
-const FEED_ALIASES: Record<string, string> = {
-  "wheat straw": "wheat_straw",
-  "gehu bhusa": "wheat_straw",
-  "gehu ka bhusa": "wheat_straw",
-  "gehun ka bhoosa": "wheat_straw",
-  "gehun ki bhoosi": "wheat_straw",
-  "gehun ka bhusa": "wheat_straw",
-  "paddy straw": "paddy_straw",
-  "parali": "paddy_straw",
-  "dhan ki pural": "paddy_straw",
-  "berseem": "barseem_fodder",
-  "barseem": "barseem_fodder",
-  "rijka": "lucerne_fodder",
-  "lucerne": "lucerne_fodder",
-  "maize fodder": "maize_fodder",
-  "makka chara": "maize_fodder",
-  "makke ka hara chara": "maize_fodder",
-  "makka hara chara": "maize_fodder",
-  "makke ka hara": "maize_fodder",
-  "jowar fodder": "jowar_fodder",
-  "mustard cake": "mustard_cake",
-  "sarson khali": "mustard_cake",
-  "sarson ki khali": "mustard_cake",
-  "groundnut cake": "groundnut_cake",
-  "moongphali khali": "groundnut_cake",
-  "wheat bran": "wheat_bran",
-  "chokar": "wheat_bran",
-  "rice bran": "rice_bran_deoiled",
-  "cotton cake": "cotton_seed_cake",
-  "binola khali": "cotton_seed_cake",
-  "maize grain": "maize_grain",
-  "makka dan": "maize_grain",
-  "cattle feed": "cattle_feed_bis_ii",
-  "compound feed": "cattle_feed_bis_ii",
-  "amul daan": "cattle_feed_bis_ii",
-  "amul dan": "cattle_feed_bis_ii",
-  "mineral mixture": "mineral_mixture_bis",
-  "mineral mix": "mineral_mixture_bis",
-  "napier": "grass_hybrid_napier",
-  "hybrid napier": "grass_hybrid_napier",
-  "napier hybrid": "grass_hybrid_napier",
-  "napier hybrid grass": "grass_hybrid_napier",
-  "hybrid napier grass": "grass_hybrid_napier",
-  "hybrid napier ghass": "grass_hybrid_napier",
-  "napier ghass": "grass_hybrid_napier",
-  "napier bajra": "napier_bajra___nb_21",
-};
-
-function tokenScore(query: string, feedName: string): number {
-  const tokens = query.split(/\s+/).filter((t) => t.length > 2);
-  const fn = feedName.toLowerCase();
-  let score = 0;
-  for (const t of tokens) {
-    if (fn.includes(t)) score += t.length;
-  }
-  if (query.includes("napier") && fn.includes("napier")) score += 10;
-  if (query.includes("hybrid") && fn.includes("hybrid")) score += 8;
-  if (query.includes("ghass") && fn.includes("grass")) score += 6;
-  if (query.includes("grass") && fn.includes("grass")) score += 6;
-  return score;
-}
-
-export function matchFeedByName(name: string): FeedItem | undefined {
-  const norm = name.trim().toLowerCase().replace(/\s+/g, " ");
-  if (!norm) return undefined;
-  if (FEED_ALIASES[norm]) {
-    return FEED_LIBRARY.find((f) => f.id === FEED_ALIASES[norm]);
-  }
-  const exact = FEED_LIBRARY.find((f) => f.name.toLowerCase() === norm);
-  if (exact) return exact;
-
-  let best: { feed: FeedItem; score: number } | null = null;
-  for (const f of FEED_LIBRARY) {
-    const score = tokenScore(norm, f.name);
-    if (score > 0 && (!best || score > best.score)) best = { feed: f, score };
-  }
-  if (best && best.score >= 8) return best.feed;
-
-  return FEED_LIBRARY.find(
-    (f) => f.name.toLowerCase().includes(norm) || norm.includes(f.name.toLowerCase().slice(0, 8))
-  );
-}
+export { matchFeedByName } from "./lib/feedMatch.js";
 
 export interface VoiceAnimalInput {
   label?: string;
