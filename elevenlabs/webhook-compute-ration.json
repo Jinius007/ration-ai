@@ -1,7 +1,7 @@
 {
   "type": "webhook",
   "name": "compute_balanced_ration",
-  "description": "MANDATORY for final ration advice. Runs least-cost linear programming on 270+ feed library with INAPH minimum nutrition. Call ONLY after you have asked the farmer the price per kilogram for EVERY feed (or they said pata nahi for that feed). Returns kilogram/day per feed and total daily cost — do NOT read per-feed prices aloud.",
+  "description": "MANDATORY for final ration advice. Ask farmer price per kilogram for each feed first. Include price_rs in feeds_json ONLY for prices the farmer gave — LP uses those exactly. Omit price_rs when farmer said pata nahi or did not answer — library rate used automatically. Returns kilogram/day and total daily cost.",
   "response_timeout_secs": 45,
   "api_schema": {
     "url": "{{PUBLIC_API_URL}}/api/webhook/elevenlabs/compute-ration",
@@ -25,11 +25,11 @@
         "pregnancy_month": { "type": "number", "description": "Month of pregnancy if pregnant" },
         "feeds_json": {
           "type": "string",
-          "description": "JSON array of feeds farmer uses. MUST include price_rs (rupees per kilogram) for each feed after asking the farmer. If farmer says pata nahi for a feed, omit price_rs and set price_unknown: true. Example: [{\"name\":\"hybrid napier ghaas\",\"qty_kg\":5,\"price_rs\":2},{\"name\":\"sarson khali\",\"qty_kg\":1.5,\"price_rs\":18}]"
+          "description": "JSON array of feeds farmer uses. Ask price for each feed. Include price_rs ONLY when farmer told you the price (LP uses it exactly). Omit price_rs when pata nahi or no answer — library rate used. Example: [{\"name\":\"gehu bhusa\",\"qty_kg\":5,\"price_rs\":4},{\"name\":\"sarson khali\",\"qty_kg\":2}]"
         },
         "neighborhood_feeds_json": {
           "type": "string",
-          "description": "On second call: local feeds farmer can get. Ask price per kilogram for each before calling. Example: [{\"name\":\"hybrid napier ghaas\",\"price_rs\":2}] or price_unknown: true if pata nahi."
+          "description": "Second call: local feeds. Ask price for each; include price_rs only if farmer told you, else omit for library rate."
         },
         "local_feed_names": {
           "type": "string",

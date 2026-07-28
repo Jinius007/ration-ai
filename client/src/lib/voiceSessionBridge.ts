@@ -62,23 +62,6 @@ export interface VoiceRationRequest {
   feeds: { name: string; qty_kg: number; price_rs?: number; price_unknown?: boolean }[];
 }
 
-function feedHasPrice(f: { price_rs?: number; price_unknown?: boolean }): boolean {
-  if (f.price_unknown) return true;
-  return f.price_rs != null && Number.isFinite(f.price_rs) && f.price_rs > 0;
-}
-
-function missingPriceError(
-  feeds: { name: string; price_rs?: number; price_unknown?: boolean }[],
-  lang: LangCode
-): string {
-  const names = feeds.map((f) => f.name.trim()).filter(Boolean).join(", ");
-  const example = feeds[0]?.name?.trim() || "chara";
-  if (lang === "en") {
-    return `Ask the farmer the price per kilogram for EVERY feed before computing. Still missing price for: ${names}.`;
-  }
-  return `Hisaab se pehle har chara ka daam zaroor poochhiye. Abhi daam nahi mila: ${names}. Farmer se poochhiye: "${example} ek kilogram ka kitna rupaya dete ho?"`;
-}
-
 export function computeFromVoiceRequest(req: VoiceRationRequest): {
   ok: boolean;
   error?: string;
@@ -89,11 +72,6 @@ export function computeFromVoiceRequest(req: VoiceRationRequest): {
 } {
   const warnings: string[] = [];
   const lang = (req.lang === "en" ? "en" : "hi") as LangCode;
-
-  const missingPrice = req.feeds.filter((f) => f.name.trim() && !feedHasPrice(f));
-  if (missingPrice.length) {
-    return { ok: false, error: missingPriceError(missingPrice, lang), warnings };
-  }
 
   const location = {
     district: req.district,
@@ -132,7 +110,7 @@ export function computeFromVoiceRequest(req: VoiceRationRequest): {
       feedId: item.id,
       feedName: item.name,
       qtyKg: f.qty_kg,
-      priceRs: f.price_rs ?? item.rate,
+      priceRs: f.price_rs != null && f.price_rs > 0 ? f.price_rs : item.rate,
       category: item.category,
     });
   }

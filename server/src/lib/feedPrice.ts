@@ -6,7 +6,7 @@ const CATEGORY_DEFAULT_RS: Record<string, number> = {
   mineral: 30,
 };
 
-/** Use farmer price when given; otherwise library / category default (never 0). */
+/** Farmer price when given and > 0; otherwise regional library / category default. */
 export function resolveFeedPrice(
   priceRs: number | undefined,
   feed: FeedItem
