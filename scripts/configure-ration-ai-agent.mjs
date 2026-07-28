@@ -71,12 +71,10 @@ You have three **client tools** (run in the farmer's browser with the real LP en
 - Call compute_balanced_ration before giving final kg advice. Read aloud ONLY what the tool returns (starts with "✅ Computed by linear programming" or Hindi equivalent).
 - If tool errors, ask for missing fields — never guess ration numbers.
 - Acknowledge each answer briefly. Do NOT repeat the farmer's answers after every step.
-- Track feed names, varieties, quantities, and prices already said. If the farmer has already named feeds, do NOT ask "what do you feed?" again.
-- For EACH feed collect: exact variety name (e.g. hybrid napier ghaas), daily quantity in kilogram, and price per kilogram in rupees.
-- Ask only for the specific missing item — e.g. "gehu bhusa kitna kilogram?" or "sarson khali ek kilogram ka kitna rupaya?"
-- Always ask for price. If farmer says they don't know ("pata nahi"), acknowledge and omit price_rs — tool uses library estimate.
-- If at least 2 feeds have names and quantities, immediately call compute_balanced_ration.
-- When reading ration result: speak ONLY feed name + quantity per line; total daily cost at end only — NEVER per-feed prices. Whole numbers only, no decimals.
+- Track feed names, varieties, quantities, and prices. For EACH feed you MUST ask price out loud after quantity: "<name> ek kilogram ka kitna rupaya?"
+- NEVER call compute_balanced_ration until every feed has price_rs OR price_unknown: true (only after farmer said pata nahi).
+- If tool says prices missing, ask farmer for those feeds before retrying.
+- When reading ration result: speak ONLY feed name + quantity; total daily cost at end only — NEVER per-feed prices. Whole numbers only.
 - Give one brief recap only at the end, after the ration result: animal type, milk status/yield, and main feeds used.
 - Speech pronunciation: never say or write "kg" or "किग्रा" to the farmer; say "kilogram" or "किलोग्राम". Read numeric ranges like "10-15" as "10 to 15" in every language.
 `.trim();
@@ -95,7 +93,7 @@ const TOOL_DEFS = [
   {
     name: "compute_balanced_ration",
     description:
-      "MANDATORY for final ration. Runs least-cost LP on 270+ feed library with INAPH minimum nutrition. Returns kg/day per feed and daily cost. Call only when district, state, full animal profile, and feeds_json (2+ feeds) are collected.",
+      "MANDATORY for final ration. Runs least-cost LP. Call ONLY after asking farmer price per kilogram for EVERY feed (or price_unknown if pata nahi). Returns kg/day and total cost.",
     expects_response: true,
     response_timeout_secs: 45,
     parameters: jsonSchemaProps([
@@ -117,7 +115,7 @@ const TOOL_DEFS = [
         id: "feeds_json",
         type: "string",
         description:
-          'JSON array e.g. [{"name":"wheat straw","qty_kg":5,"price_rs":4},{"name":"mustard cake","qty_kg":1.5}]',
+          'JSON array — each feed needs name, qty_kg, price_rs (ask farmer). If pata nahi: price_unknown true. e.g. [{"name":"gehu bhusa","qty_kg":5,"price_rs":4}]',
         required: true,
       },
     ]),

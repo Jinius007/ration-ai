@@ -5,7 +5,7 @@ import { detectSeason, defaultWeight, type Species } from "./types";
 import type { VoiceToolParams } from "./voiceRationTools";
 import { normalizeVoiceText } from "./normalizeChatNumbers";
 
-function parseFeedsJson(raw: string | undefined): { name: string; qty_kg: number; price_rs?: number }[] {
+function parseFeedsJson(raw: string | undefined): { name: string; qty_kg: number; price_rs?: number; price_unknown?: boolean }[] {
   if (!raw?.trim()) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -14,6 +14,7 @@ function parseFeedsJson(raw: string | undefined): { name: string; qty_kg: number
       name: String(f.name ?? f.feedName ?? ""),
       qty_kg: Number(f.qty_kg ?? f.qtyKg ?? 0),
       price_rs: f.price_rs != null ? Number(f.price_rs) : f.priceRs != null ? Number(f.priceRs) : undefined,
+      price_unknown: Boolean(f.price_unknown),
     }));
   } catch {
     return [];

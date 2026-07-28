@@ -107,6 +107,8 @@ export interface VoiceFeedInput {
   name: string;
   qty_kg: number;
   price_rs?: number;
+  /** True when farmer explicitly said they don't know the price — library estimate allowed */
+  price_unknown?: boolean;
 }
 
 export interface VoiceRationRequest {
@@ -119,6 +121,24 @@ export interface VoiceRationRequest {
   feeds: VoiceFeedInput[];
   /** Feeds farmer can get locally but did not list as current ration. */
   neighborhood_feeds?: VoiceFeedInput[];
+}
+
+function feedHasPrice(f: VoiceFeedInput): boolean {
+  if (f.price_unknown) return true;
+  return f.price_rs != null && Number.isFinite(f.price_rs) && f.price_rs > 0;
+}
+
+function missingPriceError(feeds: VoiceFeedInput[], lang: "hi" | "en"): string {
+  const names = feeds.map((f) => f.name.trim()).filter(Boolean).join(", ");
+  const example = feeds[0]?.name?.trim() || "chara";
+  if (lang === "en") {
+    return `Ask the farmer the price per kilogram for EVERY feed before computing. Still missing price for: ${names}. Ask e.g. "How much per kilogram for ${example}?" If they don't know, farmer may say so — then send price_unknown: true for that feed.`;
+  }
+  return `Hisaab se pehle har chara ka daam zaroor poochhiye. Abhi daam nahi mila: ${names}. Farmer se poochhiye: "${example} ek kilogram ka kitna rupaya dete ho?" Agar pata nahi ho to farmer "pata nahi" kahe — tab us chara ke liye price_unknown true bhejiye, market rate lagega.`;
+}
+
+function feedsMissingPrice(feeds: VoiceFeedInput[]): VoiceFeedInput[] {
+  return feeds.filter((f) => f.name.trim() && !feedHasPrice(f));
 }
 
 export function sessionFromVoiceRequest(req: VoiceRationRequest): {
@@ -228,6 +248,16 @@ export type VoiceComputeResult =
     };
 
 export function computeFromVoiceRequest(req: VoiceRationRequest): VoiceComputeResult {
+  const lang = req.lang === "en" ? "en" : "hi";
+  const missingMain = feedsMissingPrice(req.feeds);
+  if (missingMain.length) {
+    return { ok: false, error: missingPriceError(missingMain, lang), warnings: [] };
+  }
+  const missingLocal = feedsMissingPrice(req.neighborhood_feeds ?? []);
+  if (missingLocal.length) {
+    return { ok: false, error: missingPriceError(missingLocal, lang), warnings: [] };
+  }
+
   const { session, warnings } = sessionFromVoiceRequest(req);
   if (!session.animals.length) {
     return { ok: false, error: "At least one animal required.", warnings };

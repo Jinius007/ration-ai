@@ -9,6 +9,7 @@ function parseFeedsJson(raw: unknown): VoiceFeedInput[] {
       name: String((f as VoiceFeedInput).name ?? ""),
       qty_kg: Number((f as VoiceFeedInput).qty_kg ?? 0),
       price_rs: (f as VoiceFeedInput).price_rs != null ? Number((f as VoiceFeedInput).price_rs) : undefined,
+      price_unknown: Boolean((f as VoiceFeedInput).price_unknown),
     }));
   }
   if (typeof raw === "string") {
