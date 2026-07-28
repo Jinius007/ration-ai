@@ -1,0 +1,18 @@
+{
+  "type": "webhook",
+  "name": "list_regional_feeds",
+  "description": "List seasonal feeds available in the farmer's district from the feed library. Call after district and state are known, before asking what they feed.",
+  "response_timeout_secs": 20,
+  "api_schema": {
+    "url": "{{PUBLIC_API_URL}}/api/ration/regional-feeds",
+    "method": "POST",
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "district": { "type": "string", "description": "District name" },
+        "state": { "type": "string", "description": "State name" }
+      },
+      "required": ["district", "state"]
+    }
+  }
+}

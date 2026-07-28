@@ -1,7 +1,7 @@
-import { FEED_LIBRARY, FEED_BY_ID, FeedItem } from "./feedLibrary";
-import { mineralMixtureIdForLocation } from "./location";
-import { regionForState } from "./india-regions";
-import type { FarmerLocation, Region } from "./types";
+import { FEED_LIBRARY, FEED_BY_ID, FeedItem } from "./feedLibrary.js";
+import { mineralMixtureIdForLocation } from "./location.js";
+import { regionForState } from "./india-regions.js";
+import type { FarmerLocation, Region } from "./types.js";
 
 const ROUGHAGE_GROUPS = new Set([
   "Grass",

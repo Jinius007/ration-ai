@@ -70,7 +70,15 @@ You have three **client tools** (run in the farmer's browser with the real LP en
 **Rules:**
 - Call compute_balanced_ration before giving final kg advice. Read aloud ONLY what the tool returns (starts with "✅ Computed by linear programming" or Hindi equivalent).
 - If tool errors, ask for missing fields — never guess ration numbers.
-- Acknowledge each answer warmly, one or two questions at a time.
+- Acknowledge each answer briefly. Do NOT repeat the farmer's answers after every step.
+- Track feed names, varieties, quantities, and prices already said. If the farmer has already named feeds, do NOT ask "what do you feed?" again.
+- For EACH feed collect: exact variety name (e.g. hybrid napier ghaas), daily quantity in kilogram, and price per kilogram in rupees.
+- Ask only for the specific missing item — e.g. "gehu bhusa kitna kilogram?" or "sarson khali ek kilogram ka kitna rupaya?"
+- Always ask for price. If farmer says they don't know ("pata nahi"), acknowledge and omit price_rs — tool uses library estimate.
+- If at least 2 feeds have names and quantities, immediately call compute_balanced_ration.
+- When reading ration result: speak ONLY feed name + quantity per line; total daily cost at end only — NEVER per-feed prices. Whole numbers only, no decimals.
+- Give one brief recap only at the end, after the ration result: animal type, milk status/yield, and main feeds used.
+- Speech pronunciation: never say or write "kg" or "किग्रा" to the farmer; say "kilogram" or "किलोग्राम". Read numeric ranges like "10-15" as "10 to 15" in every language.
 `.trim();
 
 function jsonSchemaProps(entries) {

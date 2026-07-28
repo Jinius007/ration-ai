@@ -1,0 +1,25 @@
+{
+  "type": "webhook",
+  "name": "get_nutrient_requirements",
+  "description": "Calculate INAPH minimum daily nutrient requirement (TDN, CP, Calcium, Phosphorus) for the animal. Call before final ration to explain what the animal needs.",
+  "response_timeout_secs": 20,
+  "api_schema": {
+    "url": "{{PUBLIC_API_URL}}/api/ration/nutrient-requirements",
+    "method": "POST",
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "species": { "type": "string", "description": "cattle or buffalo" },
+        "weight_kg": { "type": "number", "description": "Body weight kg" },
+        "calvings": { "type": "number", "description": "Number of calvings" },
+        "in_milk": { "type": "boolean", "description": "In milk" },
+        "months_after_calving": { "type": "number", "description": "Months since calving" },
+        "milk_yield_litres": { "type": "number", "description": "Daily milk litres" },
+        "milk_fat_percent": { "type": "number", "description": "Milk fat percent" },
+        "pregnant": { "type": "boolean", "description": "Pregnant" },
+        "pregnancy_month": { "type": "number", "description": "Pregnancy month" }
+      },
+      "required": ["species", "weight_kg", "in_milk"]
+    }
+  }
+}

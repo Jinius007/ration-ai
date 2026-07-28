@@ -2,6 +2,7 @@ import { FEED_LIBRARY, FeedItem } from "./feedLibrary";
 import { computeHerdRation, formatPlanSummary, type HerdRationReport } from "./rationService";
 import type { AdvisorySession, AnimalRecord, FarmerFeedEntry, LangCode, Species } from "./types";
 import { defaultWeight, uid } from "./types";
+import { normalizeVoiceText } from "./normalizeChatNumbers";
 
 const FEED_ALIASES: Record<string, string> = {
   "wheat straw": "wheat_straw",
@@ -144,8 +145,8 @@ export function computeFromVoiceRequest(req: VoiceRationRequest): {
     const r = plan.result;
     nutrientNote =
       lang === "en"
-        ? `\nNutrients: TDN ${Math.round(r.supply.tdn)}/${Math.round(r.requirement.tdn)}g, CP ${Math.round(r.supply.cp)}/${Math.round(r.requirement.cp)}g (minimum met).`
-        : `\nPoshan: TDN ${Math.round(r.supply.tdn)}/${Math.round(r.requirement.tdn)}g, CP ${Math.round(r.supply.cp)}/${Math.round(r.requirement.cp)}g (minimum poora).`;
+        ? `\nNutrients: TDN ${Math.round(r.supply.tdn)}/${Math.round(r.requirement.tdn)} gram, CP ${Math.round(r.supply.cp)}/${Math.round(r.requirement.cp)} gram (minimum met).`
+        : `\nPoshan: TDN ${Math.round(r.supply.tdn)}/${Math.round(r.requirement.tdn)} gram, CP ${Math.round(r.supply.cp)}/${Math.round(r.requirement.cp)} gram (minimum poora).`;
   } else if (plan?.result.relaxed.length) {
     nutrientNote =
       lang === "en"
@@ -153,6 +154,6 @@ export function computeFromVoiceRequest(req: VoiceRationRequest): {
         : `\nNote: kuch constraints relax kiye: ${plan.result.relaxed.join(", ")}.`;
   }
 
-  const summary = `${lpNote}${nutrientNote}\n\n${formatPlanSummary(report, lang === "en" ? "en" : "hi")}`;
+  const summary = normalizeVoiceText(`${lpNote}${nutrientNote}\n\n${formatPlanSummary(report, lang === "en" ? "en" : "hi")}`);
   return { ok: true, summary, report, warnings, session };
 }

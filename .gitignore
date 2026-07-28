@@ -6,3 +6,4 @@ dist
 *.local
 *.tsbuildinfo
 elevenlabs/pashu-mitr-config-snapshot.json
+.vercel

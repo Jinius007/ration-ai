@@ -44,7 +44,8 @@ console.log("tool_ids count:", toolIds.length);
 
 if (toolIds.length === 0) {
   console.error("\n❌ NO TOOLS ATTACHED — agent will guess rations from LLM/knowledge base only.");
-  console.error("   Run: node scripts/configure-ration-ai-agent.mjs");
+  console.error("   Run: npm run configure-webhook-agent  (ElevenLabs-only)");
+  console.error("   Or:   npm run configure-agent         (web app client tools)");
   process.exit(1);
 }
 
@@ -60,7 +61,8 @@ console.log("Attached tools:", names.join(", ") || "(could not resolve names)");
 const missing = REQUIRED.filter((n) => !names.includes(n));
 if (missing.length) {
   console.error("\n❌ Missing tools:", missing.join(", "));
-  console.error("   Run: node scripts/configure-ration-ai-agent.mjs");
+  console.error("   Run: npm run configure-webhook-agent  (ElevenLabs-only)");
+  console.error("   Or:   npm run configure-agent         (web app client tools)");
   process.exit(1);
 }
 
@@ -71,6 +73,13 @@ if (!prompt.includes("compute_balanced_ration")) {
   console.log("\n✅ Prompt includes LP tool instructions.");
 }
 
-console.log("\n✅ Agent is configured for real LP computation via client tools.");
-console.log("   In a call, when agent calls compute_balanced_ration, UI shows:");
-console.log('   "✅ LP ration computed — see form below"');
+const types = attached.map((t) => t.tool_config?.type).filter(Boolean);
+const mode = types.includes("webhook") ? "webhook (ElevenLabs-only)" : "client (needs web app)";
+
+console.log(`\n✅ Agent is configured for real LP computation via ${mode}.`);
+if (types.includes("webhook")) {
+  console.log("   Webhook URLs should point to your deployed PUBLIC_API_URL.");
+} else {
+  console.log("   For ElevenLabs dashboard/widget without the web app, run:");
+  console.log("   npm run configure-webhook-agent");
+}

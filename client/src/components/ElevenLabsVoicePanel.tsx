@@ -7,6 +7,7 @@ import {
 import { Loader2, Mic, PhoneOff, Radio, Sparkles } from "lucide-react";
 import { useAdvisory } from "../context/AdvisoryContext";
 import { t } from "../lib/i18n";
+import { normalizeChatNumbers } from "../lib/normalizeChatNumbers";
 import {
   callComputeRationWithReport,
   callListRegionalFeeds,
@@ -191,8 +192,9 @@ export function ElevenLabsVoicePanel({ agentId, autoStart = false }: { agentId: 
       }}
       onMessage={(ev) => {
         const role = ev.source === "user" ? "user" : "agent";
-        const text = ev.message?.trim();
+        let text = ev.message?.trim();
         if (!text) return;
+        if (role === "agent") text = normalizeChatNumbers(text);
         setLines((prev) => {
           const last = prev[prev.length - 1];
           if (last && last.role === role) {

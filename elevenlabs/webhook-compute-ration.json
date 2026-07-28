@@ -1,0 +1,42 @@
+{
+  "type": "webhook",
+  "name": "compute_balanced_ration",
+  "description": "MANDATORY for final ration advice. Runs least-cost linear programming on 270+ feed library with INAPH minimum nutrition (TDN, CP, Ca, P), DM limits, concentrate cap, forage + mineral. Call as soon as district, state, animal profile, and at least 2 current feeds with quantities are known. Do not re-ask feed names already provided. Feed prices are optional and estimated if missing. Returns kilogram/day per feed and daily cost in rupees.",
+  "response_timeout_secs": 45,
+  "api_schema": {
+    "url": "{{PUBLIC_API_URL}}/api/webhook/elevenlabs/compute-ration",
+    "method": "POST",
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "farmer_name": { "type": "string", "description": "Farmer name if known" },
+        "lang": { "type": "string", "description": "Language code: hi, en, gu, mr, etc." },
+        "district": { "type": "string", "description": "District name e.g. Anand" },
+        "state": { "type": "string", "description": "State name e.g. Gujarat" },
+        "species": { "type": "string", "description": "cattle or buffalo" },
+        "breed": { "type": "string", "description": "Breed e.g. Murrah, Gir" },
+        "weight_kg": { "type": "number", "description": "Body weight in kg, estimate if unknown" },
+        "calvings": { "type": "number", "description": "Number of calvings / times bachha hua" },
+        "in_milk": { "type": "boolean", "description": "True if animal is giving milk now" },
+        "months_after_calving": { "type": "number", "description": "Months since last calving" },
+        "milk_yield_litres": { "type": "number", "description": "Daily milk in litres" },
+        "milk_fat_percent": { "type": "number", "description": "Milk fat percent e.g. 4 or 7" },
+        "pregnant": { "type": "boolean", "description": "Is pregnant" },
+        "pregnancy_month": { "type": "number", "description": "Month of pregnancy if pregnant" },
+        "feeds_json": {
+          "type": "string",
+          "description": "JSON array of feeds farmer already said they use, e.g. [{\"name\":\"wheat straw\",\"qty_kg\":5,\"price_rs\":4}]. Include every feed already mentioned. price_rs optional — regional library rate used if missing or zero."
+        },
+        "neighborhood_feeds_json": {
+          "type": "string",
+          "description": "REQUIRED on second call after farmer names local feeds. JSON array e.g. [{\"name\":\"hybrid napier grass\"}]. Same animal + feeds_json as first call."
+        },
+        "local_feed_names": {
+          "type": "string",
+          "description": "Easier alternative on second call: comma-separated local feed names the farmer said, e.g. hybrid napier grass"
+        }
+      },
+      "required": ["district", "state", "species", "weight_kg", "calvings", "in_milk", "pregnant", "feeds_json"]
+    }
+  }
+}

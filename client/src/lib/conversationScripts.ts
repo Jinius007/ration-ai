@@ -36,18 +36,18 @@ const HI: Record<ConvStage, ScriptFn> = {
     c.inMilk === 1
       ? `Achha, doodh de rahi hai — badhiya. Roz kitna doodh milta hai? Litron mein boliye, jaise 6, 8 ya 10.`
       : c.pregnant === 1
-        ? "Theek — garbh hai. Ab batayiye, roz kya chara khilate ho? Pehle hara ya sukha — jaise berseem, bhusa, makka chara…"
-        : "Samajh gaya — sukhi hai. Ab batayiye, roz kya chara khilate ho? Pehle hara ya sukha — jaise berseem, bhusa, makka chara…",
+        ? "Theek — garbh hai. Ab batayiye, roz kya chara khilate ho? Har chara ka naam aur variety batayiye — kitna kilogram, aur kilogram ka daam?"
+        : "Samajh gaya — sukhi hai. Ab batayiye, roz kya chara khilate ho? Har chara ka naam aur variety batayiye — kitna kilogram, aur kilogram ka daam?",
   milk_yield: (c) =>
     c.milkYieldKg
-      ? `${c.milkYieldKg} litre roz — note kar liya. Ab chara ke baare mein batayiye — subah shaam kya dalte ho? Jaise berseem, makka chara, gehu bhusa…`
-      : "Ab chara ke baare mein batayiye — subah shaam kya dalte ho? Jaise berseem, makka chara, gehu bhusa…",
+      ? `${c.milkYieldKg} litre roz — note kar liya. Ab chara ke baare mein batayiye — subah shaam kya dalte ho? Har chara ka naam aur variety batayiye, jaise hybrid napier ghaas, berseem, gehu bhusa — kitna kilogram dete ho, aur ek kilogram ka kitna rupaya dete ho?`
+      : "Ab chara ke baare mein batayiye — subah shaam kya dalte ho? Har chara ka naam aur variety batayiye, jaise hybrid napier ghaas, berseem, gehu bhusa — kitna kilogram, aur ek kilogram ka daam?",
   pregnancy: () =>
-    "Theek hai. Ab chara ke baare mein — roz kya dalte ho? Hara ya sukha, jaise berseem, bhusa, makka chara…",
+    "Theek hai. Ab chara ke baare mein — roz kya dalte ho? Har ek ka naam aur variety batayiye, kitna kilogram, aur kilogram ka daam?",
   feed_roughage: (c) =>
     c.roughageText
-      ? `Achha, ${c.roughageText} — sun liya. Ab ek aur sawaal — concentrate kya dete ho? Sarson khali, chokar, dan? Kitna kilo, woh bhi batayiye.`
-      : "Sun liya. Ab concentrate — sarson khali, chokar, moongphali khali? Naam aur kitna kilo dete ho, dono boliye.",
+      ? `Achha, ${c.roughageText} — sun liya. Ab concentrate kya dete ho? Sarson khali, chokar, dan? Har ek ka naam, kitna kilogram, aur kilogram ka daam batayiye. Agar daam pata nahi ho to "pata nahi" boliye.`
+      : "Sun liya. Ab concentrate — sarson khali, chokar, moongphali khali? Naam, kitna kilogram, aur kilogram ka daam batayiye. Agar daam pata nahi ho to boliye.",
   feed_concentrate: (c) =>
     `${c.name} ji, sab samajh aa gaya — dhanyavaad. Main ab aapke ${c.district} ke hisaab se santulit khurak nikal raha hoon… bas ek pal rukiye.`,
   compute: (c) =>
@@ -77,18 +77,18 @@ const EN: Record<ConvStage, ScriptFn> = {
     c.inMilk === 1
       ? "Good, she's in milk. Roughly how many litres per day? Say a number like 6, 8 or 10."
       : c.pregnant === 1
-        ? "Understood — she's pregnant. What roughage do you feed daily? Green or dry — berseem, straw, maize fodder…"
-        : "Got it — she's dry. What roughage do you feed daily? Green or dry — berseem, straw, maize fodder…",
+        ? "Understood — she's pregnant. What roughage do you feed daily? Name each variety, kilogram amount, and price per kilogram."
+        : "Got it — she's dry. What roughage do you feed daily? Name each variety, kilogram amount, and price per kilogram.",
   milk_yield: (c) =>
     c.milkYieldKg
-      ? `${c.milkYieldKg} litres a day — noted. Now tell me about fodder — what do you give morning and evening? Berseem, maize fodder, wheat straw…`
-      : "Tell me about fodder — what do you give morning and evening? Berseem, maize fodder, wheat straw…",
+      ? `${c.milkYieldKg} litres a day — noted. Now tell me about fodder — what do you give morning and evening? Name each variety, like hybrid napier grass, berseem, wheat straw — how many kilogram, and price per kilogram?`
+      : "Tell me about fodder — what do you give morning and evening? Name each variety — how many kilogram, and price per kilogram?",
   pregnancy: () =>
-    "Okay. What roughage do you give each day? Green or dry — berseem, straw, maize fodder…",
+    "Okay. What roughage do you give each day? Name each variety, kilogram amount, and price per kilogram.",
   feed_roughage: (c) =>
     c.roughageText
-      ? `Got it — ${c.roughageText}. One more thing — what concentrates do you use? Mustard cake, bran, grain? Name and roughly how many kg.`
-      : "Thanks. Now concentrates — mustard cake, bran, groundnut cake? Name and how many kg you give.",
+      ? `Got it — ${c.roughageText}. What concentrates do you use? Mustard cake, bran, grain? Name, kilogram, and price per kilogram for each. Say "don't know" if you're unsure of the price.`
+      : "Thanks. Now concentrates — mustard cake, bran, groundnut cake? Name, kilogram, and price per kilogram. Say if you don't know the price.",
   feed_concentrate: (c) =>
     `${c.name}, that's everything I need — thank you. I'm working out a balanced ration for ${c.district}… just a moment.`,
   compute: (c) =>
@@ -111,8 +111,8 @@ export function reprompt(lang: LangCode, stage: ConvStage, ctx: Record<string, s
       milk_status: "Is she in milk now, or dry, or pregnant?",
       milk_yield: "How many litres of milk per day? A number like 8 or 10.",
       pregnancy: "Is she pregnant? Yes or no.",
-      feed_roughage: "What green or dry fodder do you give? Like berseem or straw.",
-      feed_concentrate: "What concentrate — mustard cake, bran? How many kg?",
+      feed_roughage: "What fodder do you give? Name, variety, kilogram amount, and price per kilogram.",
+      feed_concentrate: "What concentrate — mustard cake, bran? Name, kilogram, and price per kilogram?",
     };
     return en[stage] ?? "Could you say that once more?";
   }
@@ -125,8 +125,8 @@ export function reprompt(lang: LangCode, stage: ConvStage, ctx: Record<string, s
     milk_status: "Abhi doodh de rahi hai, ya sukhi hai, ya garbh hai?",
     milk_yield: "Roz kitna litre doodh milta hai? Jaise 6, 8 ya 10.",
     pregnancy: "Kya garbh hai? Haan ya nahi boliye.",
-    feed_roughage: "Roz kya chara dalte ho? Jaise berseem, bhusa, makka chara…",
-    feed_concentrate: "Concentrate kya dete ho — sarson khali, chokar? Kitna kilo?",
+    feed_roughage: "Roz kya chara dalte ho? Naam aur variety, kitna kilogram, aur kilogram ka daam batayiye.",
+    feed_concentrate: "Concentrate kya dete ho — sarson khali, chokar? Naam, kitna kilogram, aur daam?",
   };
   return hi[stage] ?? "Thoda clear boliye, main phir se sun leta hoon.";
 }

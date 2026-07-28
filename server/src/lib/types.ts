@@ -15,6 +15,8 @@ export interface FarmerLocation {
 export interface FarmerFeedEntry {
   feedId: string;
   feedName: string;
+  /** Name the farmer used (for Hindi chat display). */
+  spokenName?: string;
   qtyKg: number;
   priceRs: number;
   category: "roughage" | "concentrate" | "mineral";
@@ -42,6 +44,10 @@ export interface AdvisorySession {
   location: FarmerLocation | null;
   animals: AnimalRecord[];
   feeds: FarmerFeedEntry[];
+  /** Other feeds available nearby (not currently fed, but farmer says they can get). */
+  neighborhoodFeeds?: FarmerFeedEntry[];
+  /** When farmer did not give prices, note about library estimates used. */
+  priceEstimateNote?: string;
   notes?: string;
 }
 

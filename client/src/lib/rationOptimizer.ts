@@ -142,6 +142,22 @@ function computeSupply(inputs: RationFeedInput[], qty: Record<string, number>) {
   return s;
 }
 
+/** Nutrients if farmer feeds the upper bound (+25%) of what they entered. */
+export function supplyAtFarmerMax(inputs: RationFeedInput[]) {
+  const qty: Record<string, number> = {};
+  for (const item of inputs) {
+    if (item.currentQty > 0) qty[item.feed.id] = item.currentQty * 1.25;
+  }
+  const s = computeSupply(inputs, qty);
+  return {
+    tdn: Math.round(s.tdn),
+    cp: Math.round(s.cp),
+    ca: Math.round(s.ca * 10) / 10,
+    p: Math.round(s.p * 10) / 10,
+    dm: Math.round(s.dm),
+  };
+}
+
 /**
  * Solve the least-cost ration. Tries the full RBP model first; if infeasible
  * with the given feeds, relaxes constraints step by step (Ca/P first, then the

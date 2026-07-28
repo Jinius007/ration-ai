@@ -8,9 +8,10 @@
     "dev:client": "npm run dev --prefix client",
     "dev:server": "npm run dev --prefix server",
     "build": "npm run build --prefix client",
-    "vercel-build": "npm run build --prefix client",
+    "vercel-build": "node -e \"console.log('API-only')\"",
     "test": "npm run test --prefix client",
     "configure-agent": "node scripts/configure-ration-ai-agent.mjs",
+    "configure-webhook-agent": "node scripts/configure-elevenlabs-webhook-agent.mjs",
     "verify-agent": "node scripts/verify-agent-lp.mjs",
     "start": "npm run start --prefix server"
   },

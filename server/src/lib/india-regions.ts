@@ -1,4 +1,4 @@
-import type { Region } from "./types";
+import type { Region } from "./types.js";
 
 export const INDIAN_STATES: { code: string; name: string; region: Region }[] = [
   { code: "PB", name: "Punjab", region: "north" },

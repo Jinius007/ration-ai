@@ -3,6 +3,7 @@ import { computeRequirement } from "./nutrientRequirements";
 import { feedsForLocation } from "./regionalFeeds";
 import { detectSeason, defaultWeight, type Species } from "./types";
 import type { VoiceToolParams } from "./voiceRationTools";
+import { normalizeVoiceText } from "./normalizeChatNumbers";
 
 function parseFeedsJson(raw: string | undefined): { name: string; qty_kg: number; price_rs?: number }[] {
   if (!raw?.trim()) return [];
@@ -51,12 +52,12 @@ export function computeRationViaLp(params: VoiceToolParams | Record<string, unkn
   if (!result.ok) {
     const msg = result.error ?? "Computation failed";
     const warn = result.warnings.length ? `\n${result.warnings.join("; ")}` : "";
-    return { ok: false as const, message: `${msg}${warn}` };
+    return { ok: false as const, message: normalizeVoiceText(`${msg}${warn}`) };
   }
   const warn = result.warnings.length ? `\n\nNote: ${result.warnings.join("; ")}` : "";
   return {
     ok: true as const,
-    message: `${result.summary}${warn}`,
+    message: normalizeVoiceText(`${result.summary}${warn}`),
     session: result.session!,
     report: result.report!,
   };
@@ -76,13 +77,15 @@ export function requirementsViaInaph(params: Record<string, unknown>): string {
     monthsAfterCalving: Number(params.months_after_calving) || 4,
     milkPrice: 34,
   });
-  return `INAPH minimum daily need: TDN ${Math.round(req.total.tdn)}g, CP ${Math.round(req.total.cp)}g, Ca ${req.total.ca.toFixed(1)}g, P ${req.total.p.toFixed(1)}g.`;
+  return normalizeVoiceText(
+    `INAPH minimum daily need: TDN ${Math.round(req.total.tdn)} gram, CP ${Math.round(req.total.cp)} gram, Calcium ${req.total.ca.toFixed(1)} gram, Phosphorus ${req.total.p.toFixed(1)} gram.`
+  );
 }
 
 export function regionalFeedsText(district: string, state: string): string {
   if (!district) return "District and state required for regional feed list.";
   const season = detectSeason();
   const feeds = feedsForLocation({ district, state, label: `${district}, ${state}` }, season).slice(0, 25);
-  const lines = feeds.map((f) => `• ${f.name} (₹${f.rate}/kg)`);
-  return `Season ${season}. Feeds for ${district}, ${state}:\n${lines.join("\n")}`;
+  const lines = feeds.map((f) => `• ${f.name} (₹${f.rate} per kilogram)`);
+  return normalizeVoiceText(`Season ${season}. Feeds for ${district}, ${state}:\n${lines.join("\n")}`);
 }

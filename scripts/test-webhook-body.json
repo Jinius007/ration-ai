@@ -1,0 +1,12 @@
+{
+  "district": "Anand",
+  "state": "Gujarat",
+  "species": "buffalo",
+  "weight_kg": 450,
+  "calvings": 2,
+  "in_milk": true,
+  "milk_yield_litres": 8,
+  "milk_fat_percent": 7,
+  "pregnant": false,
+  "feeds_json": "[{\"name\":\"wheat straw\",\"qty_kg\":5,\"price_rs\":4},{\"name\":\"mustard cake\",\"qty_kg\":1.5,\"price_rs\":22}]"
+}

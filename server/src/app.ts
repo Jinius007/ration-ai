@@ -12,9 +12,11 @@ import { z } from "zod";
 import { computeHerdRation, formatPlanSummary } from "./lib/rationService.js";
 import type { AdvisorySession } from "./lib/types.js";
 import { computeFromVoiceRequest } from "./rationBridge.js";
+import { normalizeVoiceWebhookBody } from "./webhookNormalize.js";
 import { feedsForLocation } from "./lib/regionalFeeds.js";
 import { computeRequirement } from "./lib/nutrientRequirements.js";
 import { detectSeason, defaultWeight } from "./lib/types.js";
+import { normalizeVoiceText } from "./lib/voiceText.js";
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY ?? "";
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID ?? "";
@@ -143,9 +145,9 @@ export function createApp() {
     }
     const season = detectSeason();
     const feeds = feedsForLocation({ district, state, label: `${district}, ${state}` }, season).slice(0, 30);
-    const lines = feeds.map((f) => `• ${f.name} — ₹${f.rate}/kg (${f.group})`);
+    const lines = feeds.map((f) => `• ${f.name} — ₹${f.rate} per kilogram (${f.group})`);
     res.json({
-      result: `Mausam: ${season}. ${district}, ${state} ke common chara:\n${lines.join("\n")}`,
+      result: normalizeVoiceText(`Mausam: ${season}. ${district}, ${state} ke common chara:\n${lines.join("\n")}`),
       feeds: feeds.map((f) => ({ name: f.name, id: f.id, rate: f.rate, group: f.group })),
     });
   });
@@ -166,15 +168,26 @@ export function createApp() {
       milkPrice: 34,
     });
     res.json({
-      result: `Roz ki zaroorat (INAPH): TDN ${Math.round(req_.total.tdn)} gram, CP ${Math.round(req_.total.cp)} gram, Calcium ${req_.total.ca.toFixed(1)} g, Phosphorus ${req_.total.p.toFixed(1)} g.`,
+      result: normalizeVoiceText(
+        `Roz ki zaroorat (INAPH): TDN ${Math.round(req_.total.tdn)} gram, CP ${Math.round(req_.total.cp)} gram, Calcium ${req_.total.ca.toFixed(1)} gram, Phosphorus ${req_.total.p.toFixed(1)} gram.`
+      ),
       requirements: req_.total,
     });
   });
 
   app.post("/api/webhook/elevenlabs/compute-ration", (req, res) => {
-    const voice = computeFromVoiceRequest(req.body);
+    const normalized = normalizeVoiceWebhookBody((req.body ?? {}) as Record<string, unknown>);
+    const voice = computeFromVoiceRequest(normalized);
     if (voice.ok) {
-      res.json({ result: voice.summary, report: voice.report, warnings: voice.warnings });
+      const warn = voice.warnings.length > 0 ? `\n\n(${voice.warnings.join("; ")})` : "";
+      res.json({
+        result: normalizeVoiceText(voice.summary + warn),
+        warnings: voice.warnings,
+      });
+      return;
+    }
+    if (voice.error) {
+      res.json({ result: voice.error, warnings: voice.warnings });
       return;
     }
     const parsed = sessionSchema.safeParse(req.body);
